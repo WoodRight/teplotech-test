@@ -99,8 +99,7 @@ function showHome(){
   const tps = topics();
   $("app").innerHTML = `
   <div class="card">
-    <p style="margin-top:0">В базе <b>${QUESTIONS.length}</b> уникальных вопросов, собранных со всех фото (дубликаты объединены).
-    Вопросы с пометкой <span class="doubt">⚠ сомнительный</span> проверь у преподавателя или однокурсников.</p>
+    <p style="margin-top:0">В базе <b>${QUESTIONS.length}</b> уникальных вопросов, собранных со всех фото (дубликаты объединены).${QUESTIONS.some(q=>q.doubtful)?' Вопросы с пометкой <span class="doubt">⚠ сомнительный</span> проверь у преподавателя или однокурсников.':''}</p>
     <div class="settings">
       <div class="row"><b>Режим:</b>
         <label><input type="radio" name="mode" value="train" checked> Тренировка (ответ и пояснение сразу)</label>
@@ -116,7 +115,7 @@ function showHome(){
     <div style="margin-top:12px">
       <button class="btn" data-act="startFromForm">▶ Начать</button>
       <button class="btn gray" data-act="startMistakes" ${m.length?"":"disabled"}>↻ Работа над ошибками (${m.length})</button>
-      <button class="btn gray" data-act="startDoubtful">⚠ Только сомнительные</button>
+      ${QUESTIONS.some(q=>q.doubtful)?'<button class="btn gray" data-act="startDoubtful">⚠ Только сомнительные</button>':''}
       <button class="btn gray" data-act="showKey">📋 Все вопросы с ответами</button>
     </div>
   </div>
@@ -135,8 +134,9 @@ function startMistakes(){
   if(!pool.length){showHome();return}
   startSession(pool,"train",true,true);
 }
-function startDoubtful(){startSession(QUESTIONS.filter(q=>q.doubtful),"train",false)}
+function startDoubtful(){const p=QUESTIONS.filter(q=>q.doubtful);if(!p.length){showHome();return}startSession(p,"train",false)}
 function startSession(pool,mode,shOpt,isMistakeRun){
+  if(!pool||!pool.length){showHome();return}
   S={mode,isMistakeRun:!!isMistakeRun,i:0,items:pool.map(q=>({q,order:(q.type==="text")?[]:(shOpt?shuffle(q.options.map((_,k)=>k)):q.options.map((_,k)=>k)),answer:null,checked:false,ok:null})),score:0};
   renderQ();
 }
@@ -260,7 +260,7 @@ function showKey(){
   const tps=topics();
   $("app").innerHTML=`<div class="card"><h2 style="margin-top:0">Все вопросы и правильные ответы</h2>
    <div class="row"><select id="kTopic"><option value="">Все темы</option>${tps.map(t=>`<option>${esc(t)}</option>`).join("")}</select>
-   <label><input type="checkbox" id="kDoubt"> только сомнительные</label>
+   <label${QUESTIONS.some(q=>q.doubtful)?"":' style="display:none"'}><input type="checkbox" id="kDoubt"> только сомнительные</label>
    <input type="text" id="kSearch" placeholder="поиск по тексту"></div></div>
    <div class="card key" id="keyList"></div>`;
   $("kTopic").addEventListener("change",renderKeyList);$("kDoubt").addEventListener("change",renderKeyList);$("kSearch").addEventListener("input",renderKeyList);
